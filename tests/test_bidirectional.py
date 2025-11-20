@@ -42,7 +42,9 @@ def test_unidirectional():
         model.match(img_A, img_B)
     t1 = time.perf_counter()
     print(f"Time taken: {t1 - t0} seconds")
-    print(f"FPS: {T * B / (t1 - t0)}")
+    fps = T * B / (t1 - t0)
+    print(f"FPS: {fps}")
+    assert fps > 33, "FPS should be greater than 33"
 
 def test_bidirectional():
     model = RoMaV2()
@@ -80,7 +82,9 @@ def test_bidirectional():
         model.match(img_A, img_B)
     t1 = time.perf_counter()
     print(f"Time taken: {t1 - t0} seconds")
-    print(f"FPS: {T * B / (t1 - t0)}")
+    fps = T * B / (t1 - t0)
+    print(f"FPS: {fps}")
+    assert fps > 23, "FPS should be greater than 23"
 
 if __name__ == "__main__":
     print("Testing unidirectional...")
