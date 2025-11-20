@@ -83,7 +83,6 @@ def local_correlation(
     feature1: torch.Tensor,  # (B x C x H x W)
     local_radius: int,
     warp: torch.Tensor,  # (B x H x W x 2)
-    use_custom_corr: bool,
     scale_factor: torch.Tensor,
     padding_mode="zeros",
     sample_mode: Literal["bilinear", "nearest"] = "bilinear",
@@ -116,7 +115,7 @@ def local_correlation(
         .expand(1, 2 * r + 1, 2 * r + 1, 2)
         .reshape(1, K, 2)
     )
-    if not use_custom_corr:
+    if local_corr is None:
         corr = native_torch_local_corr(
             feature0,
             feature1,

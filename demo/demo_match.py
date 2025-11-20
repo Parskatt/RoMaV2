@@ -49,7 +49,7 @@ if __name__ == "__main__":
         x1[None], warp_BtoA[None], mode="bilinear", align_corners=False
     )[0]
     warp_im = torch.cat((im2_transfer_rgb, im1_transfer_rgb), dim=2)
-    overlap = torch.cat((overlap_AtoB, overlap_BtoA), dim=1)
+    overlap = torch.cat((overlap_AtoB, overlap_BtoA), dim=1)[..., 0]
     white_im = torch.ones((H, 2 * W), device=device)
     vis_im = overlap * warp_im + (1 - overlap) * white_im
     if not Path(save_path).exists():

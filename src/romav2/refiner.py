@@ -80,7 +80,6 @@ class ConvRefiner(nn.Module):
         norm_type_name: NormType = "batch"
         bn_momentum: float = 0.01
         enable_amp: bool = True
-        use_custom_corr: bool = True
         refine_init: float = 4.0
         channels_last: bool = False
         block_type: Literal["roma"] = "roma"
@@ -178,7 +177,6 @@ class ConvRefiner(nn.Module):
                 f_B_bdhw,
                 local_radius=self.cfg.local_corr_radius,
                 warp=prev_warp,
-                use_custom_corr=self.cfg.use_custom_corr,
                 scale_factor=scale_factor,
             )
             d = torch.cat((d, local_corr), dim=1)
