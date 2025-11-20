@@ -97,7 +97,7 @@ class ScanNet1500:
                     e_t, e_R = compute_pose_error(R_est, t_est[:, 0], R, t)
                     e_pose = max(e_t, e_R)
                 except Exception as e:
-                    logger.warning("Pose estimation error: %s", repr(e))
+                    logger.debug(f"Pose estimation error: {e}")
                     e_t, e_R = 90, 90
                     e_pose = max(e_t, e_R)
                 tot_e_t.append(e_t)

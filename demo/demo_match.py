@@ -27,7 +27,6 @@ if __name__ == "__main__":
 
     model = RoMaV2()
     model.apply_setting("precise")
-    model.bidirectional = True 
     H, W = (model.H_lr, model.W_lr) if (model.H_hr is None or model.W_hr is None) else (model.H_hr, model.W_hr) 
     im1 = Image.open(im1_path).resize((W, H))
     im2 = Image.open(im2_path).resize((W, H))

@@ -120,7 +120,7 @@ class MatchTransformer(nn.Module):
             self.storage_tokens = nn.Parameter(
                 torch.empty(1, n_storage_tokens, dim, device=device)
             )
-        logger.info(f"using {ffn_layer} layer as FFN")
+        logger.debug(f"using {ffn_layer} layer as FFN")
         ffn_layer_cls = ffn_layer_dict[ffn_layer]
         ffn_ratio_sequence = [ffn_ratio] * depth
         blocks_list = [
