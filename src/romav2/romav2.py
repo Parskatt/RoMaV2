@@ -270,7 +270,7 @@ class RoMaV2(nn.Module):
             img_A_hr = None
             img_B_hr = None
 
-        preds = self.forward(img_A_lr, img_B_lr, img_A_hr=img_A_hr, img_B_hr=img_B_hr)
+        preds = self(img_A_lr, img_B_lr, img_A_hr=img_A_hr, img_B_hr=img_B_hr)
         assert isinstance(preds["warp"], torch.Tensor) and isinstance(
             preds["confidence"], torch.Tensor
         )
@@ -285,7 +285,7 @@ class RoMaV2(nn.Module):
             precision = None
 
         if self.bidirectional:
-            preds_BA = self.forward(
+            preds_BA = self(
                 img_B_lr, img_A_lr, img_B_hr=img_A_hr, img_A_hr=img_B_hr
             )
 
