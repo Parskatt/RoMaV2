@@ -1,5 +1,4 @@
 from __future__ import annotations
-from unicodedata import bidirectional
 
 from dataclasses import dataclass
 from pathlib import Path
