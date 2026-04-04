@@ -96,7 +96,8 @@ class RoMaV2(nn.Module):
             cfg = RoMaV2.Cfg()
             
         weights = torch.hub.load_state_dict_from_url(
-            "https://github.com/Parskatt/RoMaV2/releases/download/v2.0.1/romav2.0.1.pt"
+            "https://github.com/Parskatt/RoMaV2/releases/download/v2.0.1/romav2.0.1.pt",
+            map_location=device
         )
         self.f = Descriptor(cfg.descriptor)
         self.matcher = Matcher(cfg.matcher)
