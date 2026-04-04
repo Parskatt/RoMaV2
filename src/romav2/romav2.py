@@ -95,10 +95,9 @@ class RoMaV2(nn.Module):
             # default
             cfg = RoMaV2.Cfg()
             
-        # weights = torch.hub.load_state_dict_from_url(
-        #     "https://github.com/Parskatt/RoMaV2/releases/download/weights/romav2.pt"
-        # )
-        weights = torch.load("/mimer/NOBACKUP/groups/alvis_cvl/johed/repos/RoMaV2/romav2.0.1.pt")
+        weights = torch.hub.load_state_dict_from_url(
+            "https://github.com/Parskatt/RoMaV2/releases/download/weights/romav2.0.1.pt"
+        )
         self.f = Descriptor(cfg.descriptor)
         self.matcher = Matcher(cfg.matcher)
         self.cfg = cfg
