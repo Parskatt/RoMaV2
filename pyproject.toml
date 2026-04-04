@@ -1,6 +1,6 @@
 [project]
 name = "romav2"
-version = "2.0.0"
+version = "2.0.1"
 description = "RoMa v2: Harder Better Faster Denser Feature Matching"
 readme = "README.md"
 authors = [
@@ -15,6 +15,7 @@ dependencies = [
     "torch",
     "torchvision>=0.23.0",
     "tqdm>=4.67.1",
+    "fused-local-corr ; sys_platform == 'linux'",
 ]
 
 [build-system]
@@ -22,9 +23,6 @@ requires = ["uv_build>=0.8.15,<0.9.0"]
 build-backend = "uv_build"
 
 [project.optional-dependencies]
-fused-local-corr = [
-    "fused-local-corr ; sys_platform == 'linux'",
-]
 eval = [
     "kornia>=0.8.2",
     "matplotlib>=3.10.7",
