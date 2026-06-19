@@ -32,7 +32,8 @@ def _compute_match_embeddings(
     W_A: int,
     H_B: int,
     W_B: int,
-) -> torch.Tensor:
+    return_attention: bool,
+) -> tuple[torch.Tensor | None, torch.Tensor | None, torch.Tensor]:
     attn_AB_logits = (1 / temp * cosine_similarity(f_A, f_B)).reshape(
         B, H_A * W_A, H_B * W_B
     )
@@ -42,8 +43,10 @@ def _compute_match_embeddings(
     match_emb = einsum(
         attn_AB, pos_emb_grid, "B H_A W_A H_B W_B, B H_B W_B D -> B H_A W_A D"
     )
-    attn_AB_logits = attn_AB_logits.reshape(B, H_A, W_A, H_B, W_B)
-    return attn_AB_logits, attn_AB, match_emb
+    if return_attention:
+        attn_AB_logits = attn_AB_logits.reshape(B, H_A, W_A, H_B, W_B)
+        return attn_AB_logits, attn_AB, match_emb
+    return None, None, match_emb
 
 
 def _compute_head_preds(
@@ -121,6 +124,7 @@ class Matcher(nn.Module):
         img_A: torch.Tensor,
         img_B: torch.Tensor,
         bidirectional: bool,
+        return_attention: bool = True,
     ):
         preds = {}
         f_A = torch.cat(f_list_A, dim=-1)
@@ -158,6 +162,7 @@ class Matcher(nn.Module):
             W_A=W_A,
             H_B=H_B,
             W_B=W_B,
+            return_attention=return_attention,
         )
         warp_AB, confidence_AB = _compute_head_preds(
             f_list_A=f_list_A,
@@ -179,6 +184,7 @@ class Matcher(nn.Module):
                 W_A=W_B,
                 H_B=H_A,
                 W_B=W_A,
+                return_attention=return_attention,
             )
             warp_BA, confidence_BA = _compute_head_preds(
                 f_list_A=f_list_B,

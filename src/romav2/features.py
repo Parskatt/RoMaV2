@@ -88,6 +88,7 @@ class Descriptor:
             default_factory=lambda: [11, 17]
         )  # [4, 11, 17, 23] for dinov3 style
         weights_path: str | None = None
+        module_path: str | None = None # Path to local directory containing module
 
     def __new__(cls, cfg: Cfg) -> nn.Module:
         partial_wrap = partial(
@@ -101,9 +102,10 @@ class Descriptor:
                 normalizer = imagenet
                 # TODO: this will break in distributed if not available locally
                 dinov3_vitl16: nn.Module = torch.hub.load(
-                    repo_or_dir="facebookresearch/dinov3:adc254450203739c8149213a7a69d8d905b4fcfa",
+                    repo_or_dir="facebookresearch/dinov3:adc254450203739c8149213a7a69d8d905b4fcfa" if cfg.module_path is None else cfg.module_path,
                     model="dinov3_vitl16",
                     pretrained=cfg.weights_path is not None,
+                    source="github" if cfg.module_path is None else "local",
                     weights=cfg.weights_path,
                     skip_validation=True,
                 ).to(device)
@@ -118,7 +120,9 @@ class Descriptor:
                 normalizer = imagenet
 
                 dinov2_vit14: nn.Module = torch.hub.load(
-                    "facebookresearch/dinov2", "dinov2_vitl14"
+                    repo_or_dir="facebookresearch/dinov2" if cfg.module_path is None else cfg.module_path, 
+                    model="dinov2_vitl14",
+                    source="github" if cfg.module_path is None else "local"
                 ).to(device)
                 dinov2_vit14.mask_token = None
                 layers = _get_layers(cfg.layer_idx, dinov2_vit14)

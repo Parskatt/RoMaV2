@@ -67,6 +67,14 @@ def _map_confidence(*, confidence: torch.Tensor, threshold: float | None):
     return overlap, precision
 
 
+def _move_optional_tensor(
+    tensor: torch.Tensor | None, output_device: torch.device | str | None
+) -> torch.Tensor | None:
+    if tensor is None or output_device is None:
+        return tensor
+    return tensor.to(output_device)
+
+
 class RoMaV2(nn.Module):
     @dataclass(frozen=True)
     class Cfg:
@@ -79,6 +87,7 @@ class RoMaV2(nn.Module):
         setting: Setting = "precise"
         compile: bool = False
         name: str = "RoMa v2"
+        weights: dict = None
 
     # settings
     H_lr: int
@@ -94,11 +103,14 @@ class RoMaV2(nn.Module):
         if cfg is None:
             # default
             cfg = RoMaV2.Cfg()
+
+        if cfg.weights is None:   
+            weights = torch.hub.load_state_dict_from_url(
+                "https://github.com/Parskatt/RoMaV2/releases/download/weights/romav2.pt"
+            )
+        else:
+            weights = cfg.weights
             
-        weights = torch.hub.load_state_dict_from_url(
-            "https://github.com/Parskatt/RoMaV2/releases/download/v2.0.1/romav2.0.1.pt",
-            map_location=device
-        )
         self.f = Descriptor(cfg.descriptor)
         self.matcher = Matcher(cfg.matcher)
         self.cfg = cfg
@@ -167,6 +179,7 @@ class RoMaV2(nn.Module):
         img_B_lr: torch.Tensor,
         img_A_hr: torch.Tensor | None = None,
         img_B_hr: torch.Tensor | None = None,
+        return_intermediates: bool = True,
     ) -> dict[str, tuple[torch.Tensor, torch.Tensor] | torch.Tensor]:
         if torch.get_float32_matmul_precision() != "highest":
             raise RuntimeError("Float32 matmul precision must be set to highest")
@@ -179,10 +192,16 @@ class RoMaV2(nn.Module):
         f_B = self.f(img_B_lr)
         # match feats
         matcher_output = self.matcher(
-            f_A, f_B, img_A=img_A_lr, img_B=img_B_lr, bidirectional=self.bidirectional
+            f_A,
+            f_B,
+            img_A=img_A_lr,
+            img_B=img_B_lr,
+            bidirectional=self.bidirectional,
+            return_attention=return_intermediates,
         )
         # return matcher_output
-        predictions["matcher"] = matcher_output
+        if return_intermediates:
+            predictions["matcher"] = matcher_output
         warp_AB, confidence_AB = (
             matcher_output["warp_AB"],
             matcher_output["confidence_AB"],
@@ -249,8 +268,6 @@ class RoMaV2(nn.Module):
                     )
                 else:
                     refiner_output_BA = None
-                predictions[f"refiner_{patch_size}_AB"] = refiner_output_AB
-                predictions[f"refiner_{patch_size}_BA"] = refiner_output_BA
                 warp_AB, confidence_AB = (
                     refiner_output_AB["warp"],
                     refiner_output_AB["confidence"],
@@ -260,6 +277,9 @@ class RoMaV2(nn.Module):
                         refiner_output_BA["warp"],
                         refiner_output_BA["confidence"],
                     )
+                if return_intermediates:
+                    predictions[f"refiner_{patch_size}_AB"] = refiner_output_AB
+                    predictions[f"refiner_{patch_size}_BA"] = refiner_output_BA
             predictions["warp_AB"] = warp_AB
             predictions["confidence_AB"] = confidence_AB
             if self.bidirectional:
@@ -302,6 +322,7 @@ class RoMaV2(nn.Module):
         self,
         img_like_A: ImageLike,
         img_like_B: ImageLike,
+        output_device: torch.device | str | None = None,
     ) -> dict[str, torch.Tensor]:
         self.eval()
         img_A = self._load_image(img_like_A)
@@ -340,7 +361,13 @@ class RoMaV2(nn.Module):
             img_A_hr = None
             img_B_hr = None
 
-        preds = self(img_A_lr, img_B_lr, img_A_hr=img_A_hr, img_B_hr=img_B_hr)
+        preds = self(
+            img_A_lr,
+            img_B_lr,
+            img_A_hr=img_A_hr,
+            img_B_hr=img_B_hr,
+            return_intermediates=False,
+        )
         
         warp_AB = preds["warp_AB"]
         confidence_AB = preds["confidence_AB"]
@@ -358,14 +385,14 @@ class RoMaV2(nn.Module):
             precision_BA = None
 
         preds = {
-            "warp_AB": warp_AB.clone(),
-            "confidence_AB": confidence_AB.clone(),
-            "overlap_AB": overlap_AB.clone(),
-            "precision_AB": precision_AB.clone(),
-            "warp_BA": warp_BA.clone() if warp_BA is not None else None,
-            "confidence_BA": confidence_BA.clone() if confidence_BA is not None else None,
-            "overlap_BA": overlap_BA.clone() if overlap_BA is not None else None,
-            "precision_BA": precision_BA.clone() if precision_BA is not None else None,
+            "warp_AB": _move_optional_tensor(warp_AB, output_device),
+            "confidence_AB": _move_optional_tensor(confidence_AB, output_device),
+            "overlap_AB": _move_optional_tensor(overlap_AB, output_device),
+            "precision_AB": _move_optional_tensor(precision_AB, output_device),
+            "warp_BA": _move_optional_tensor(warp_BA, output_device),
+            "confidence_BA": _move_optional_tensor(confidence_BA, output_device),
+            "overlap_BA": _move_optional_tensor(overlap_BA, output_device),
+            "precision_BA": _move_optional_tensor(precision_BA, output_device),
         }
         return preds
 
