@@ -161,7 +161,7 @@ class ConvRefiner(nn.Module):
             f_BA = bhwc_grid_sample(
                 f_B, prev_warp, mode=self.cfg.grid_sample_mode, align_corners=False
             )
-        im_A_coords = get_normalized_grid(B, H_A, W_A)
+        im_A_coords = get_normalized_grid(B, H_A, W_A, overload_device=prev_warp.device)
         in_displacement = prev_warp - im_A_coords
         in_displacement_bdhw = in_displacement.permute(0, 3, 1, 2)
         emb_in_displacement = self.disp_emb(
@@ -194,7 +194,7 @@ class ConvRefiner(nn.Module):
         delta_confidence = delta_confidence.view(B, H_A, W_A, self.cfg.confidence_dim)
         warp = prev_warp + displacement / (
             self.cfg.refine_init
-            * torch.tensor((W_A, H_A), device=device)[None, None, None]
+            * torch.tensor((W_A, H_A), device=prev_warp.device)[None, None, None]
         )
 
         if delta_confidence.shape[-1] == 4:
